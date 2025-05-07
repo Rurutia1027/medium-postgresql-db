@@ -94,17 +94,8 @@ create table payment_user_bank_account (
    areas                   varchar(20) comment 'District or area',
    street                  varchar(300) comment 'Street address detail',
    bank_account_type       varchar(36) not null comment 'Account type (e.g., PERSONAL, BUSINESS)',
-   field1                  varchar(200) comment 'Reserved field 1',
-   field2                  varchar(200) comment 'Reserved field 2',
    primary key (id),
    unique key uq_key_bank_account (user_no, bank_account_no),
    key idx_user_no (user_no)
 ) comment = 'Stores user-linked bank account and card data for initiating and managing payments.';
 ```
-
-### Relationships of Entities 
-
-
-
-
-
