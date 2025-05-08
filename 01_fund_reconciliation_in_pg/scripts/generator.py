@@ -1,17 +1,9 @@
+import random
 from random import randrange, choice 
 from datetime import datetime, timedelta 
 import psycopg2 
 from psycopg2.extras import execute_values 
-import csv 
-import declxml as xml 
-import os 
-import glob 
-
-CONNECTION = psycopg2.connect(user = os.environ["POSTGRES_USER"], 
-                                password=os.environ["POSTGRES_PASSWORD"],
-                                host="oltp",
-                                port="5432",
-                                database="sales_oltp")
+import uuid 
 
 def generate_bank_account_records(n = 100):
     statuses = ['ACTIVE', "FROZEN"]
@@ -21,7 +13,7 @@ def generate_bank_account_records(n = 100):
     for _ in range(n):
         now = datetime.now() 
         account = {
-            'id': str(uuid4()),
+            'id': str(uuid.uuid4()),
             'account_no': f'ACC{random.randint(1000000, 9999999)}',
             'balance': round(random.uniform(1000, 100000), 6),
             'unbalance': round(random.uniform(0, 1000), 6),
@@ -72,8 +64,7 @@ def insert_bank_accounts():
                 edit_time           timestamp, 
                 version             bigint not null,
                 remark              varchar(200), 
-                unique(account_no),
-                key idx_user_no (user_no)
+                unique(account_no)
             )
         """)
 
@@ -104,7 +95,7 @@ def generate_bank_account_history(account_nos, n_per_account=3):
 
             now = datetime.now()
             record = {
-                'id': str(uuid4()),
+                'id': str(uuid.uuid4()),
                 'account_no': account_no,
                 'amount': amount,
                 'balance': balance,
@@ -156,10 +147,7 @@ def insert_bank_account_history():
                 create_time timestamp not null, 
                 edit_time timestamp, 
                 version bigint not null, 
-                remark varchar(200), 
-                key idx_account_no (account_no),
-                key idx_user_no (user_no),
-                constraint fk_account_no foreign key (account_no) references bank_account(account_no)
+                remark varchar(200)
             )
         """)
 
@@ -183,7 +171,7 @@ def generate_payment_user_bank_accounts(n=20):
     for _ in range(n):
         now = datetime.now()
         record = {
-            'id': str(uuid4()),
+            'id': str(uuid.uuid4()),
             'version': 0,
             'create_time': now,
             'edit_time': now + timedelta(minutes=random.randint(1, 60)),
@@ -222,8 +210,8 @@ def insert_payment_user_bank_accounts():
             CREATE TABLE payment_user_bank_account (
                 id varchar(50) NOT NULL,
                 version bigint NOT NULL DEFAULT 0,
-                create_time datetime NOT NULL,
-                edit_time datetime,
+                create_time date NOT NULL,
+                edit_time date,
                 creater varchar(100),
                 editor varchar(100),
                 status varchar(36) NOT NULL,
@@ -241,9 +229,7 @@ def insert_payment_user_bank_accounts():
                 areas varchar(20),
                 street varchar(300),
                 bank_account_type varchar(36) NOT NULL,
-                PRIMARY KEY (id),
-                UNIQUE KEY uq_key_bank_account (user_no, bank_account_no),
-                KEY idx_user_no (user_no)
+                PRIMARY KEY (id)
             )
         """)
 
@@ -254,4 +240,26 @@ def insert_payment_user_bank_accounts():
         execute_values(cur, query, values)
 
         conn.commit()
-        print(f"{len(data)} records inserted.")           
+        print(f"{len(data)} records inserted.")    
+
+
+CONNECTION = psycopg2.connect(user = "admin", 
+                                password= "admin",
+                                host="localhost",
+                                port="5432",
+                                database="01_fund_reconciliation")
+
+def main():
+    try:
+        insert_bank_accounts()
+        insert_bank_account_history()
+        insert_payment_user_bank_accounts()
+
+    except psycopg2.Error as e:
+        print(f"Database error: {e}")  
+
+    print("Now close PG DB Connection")   
+    CONNECTION.close()         
+
+if __name__ == "__main__":
+    main()       

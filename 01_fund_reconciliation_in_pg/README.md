@@ -72,6 +72,7 @@ comment = 'Bank Account Transaction History: Records each fund movement (e.g., p
 -- Table: payment_user_bank_account
 -- Description: Stores user-linked bank account and card metadata for payment processing.
 -- =============================================
+
 create table payment_user_bank_account (
    id                      varchar(50) not null comment 'Primary key ID',
    version                 bigint not null default 0 comment 'Version for optimistic locking',
